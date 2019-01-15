@@ -1,0 +1,351 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Hitman Batch
+# Architectural choices :
+# - no  user, no password, no key, only roles
+# - no ssh access to compute envs
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: 'ComputeEnv network'
+        Parameters: ['ComputeEnvVPC', 'ComputeEnvSubnets']
+      - Label:
+          default: 'ComputeEnv Cpu'
+        Parameters: ['ComputeEnvMinCpu', 'ComputeEnvDesiredCpu', 'ComputeEnvMaxCpu']
+
+Parameters:
+
+  DisplayName:
+    Description: Project name
+    Type: String
+
+  TagBlock:
+    Description: Applicative block tag
+    Type: String
+
+  TagApp:
+    Description: Application tag
+    Type: String
+
+  TagOrg:
+    Description: Organization tag
+    Type: String
+
+  HitmanFrequency:
+    Description: define execution frequency
+    Type: String
+    Default: "cron(30 2 ? * SAT *)"
+
+  ComputeEnvVPC:
+    Description: compute envs VPC location
+    Type: AWS::EC2::VPC::Id
+
+  ComputeEnvSubnets:
+    Description: compute envs subnets location
+    Type: List<AWS::EC2::Subnet::Id>
+
+  ComputeEnvMinCpu:
+    Description: compute envs VPC location
+    Type: Number
+    Default: 0
+
+  ComputeEnvDesiredCpu:
+    Description: compute envs VPC location
+    Type: Number
+    Default: 0
+
+  ComputeEnvMaxCpu:
+    Description: compute envs VPC location
+    Type: Number
+    Default: 2
+
+  NukeEcrImage:
+    Description: ECR image to use
+    Type: String
+
+  HitmanConfigBucket:
+    Description: S3 bucket with Hitman configuration
+    Type: String
+
+
+Resources:
+
+  SecurityGroupForInstances:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub '${DisplayName}-instances'
+      GroupDescription: Security group for instances
+      VpcId: !Ref ComputeEnvVPC
+      Tags:
+      - Key: Block
+        Value: !Ref TagBlock
+      - Key: Org
+        Value: !Ref TagOrg
+      - Key: App
+        Value: !Ref TagApp
+
+  SpotFleetRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - "spotfleet.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+      - "arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetRole"
+
+  HitmanComputeEnv:
+    Type: "AWS::Batch::ComputeEnvironment"
+    Properties:
+      Type: MANAGED
+      ServiceRole: !Ref ComputeEnvironmentRole
+      ComputeResources:
+        MinvCpus: !Ref ComputeEnvMinCpu
+        MaxvCpus: !Ref ComputeEnvMaxCpu
+        DesiredvCpus: !Ref ComputeEnvDesiredCpu
+        SecurityGroupIds:
+          - !Ref SecurityGroupForInstances
+        Subnets: !Ref ComputeEnvSubnets
+        Type: SPOT
+        BidPercentage: 50
+        SpotIamFleetRole: !Ref SpotFleetRole
+        InstanceRole: !Ref EcsInstanceProfile
+        InstanceTypes:
+          - c5
+        Tags: {Name: !Ref DisplayName, Block: !Ref TagBlock, App: !Ref TagApp, Org: !Ref TagOrg}
+      State: ENABLED
+
+  ComputeEnvironmentRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: "/"
+      RoleName: !Sub "${DisplayName}-compute-environment"
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - batch.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      ManagedPolicyArns:
+      - "arn:aws:iam::aws:policy/service-role/AWSBatchServiceRole"
+
+  NukeJobQueue:
+    Type: "AWS::Batch::JobQueue"
+    Properties:
+      ComputeEnvironmentOrder:
+        - Order: 1
+          ComputeEnvironment: !Ref HitmanComputeEnv
+      Priority: 1
+      JobQueueName: !Sub "${DisplayName}-queue}"
+
+  EcsInstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: "/"
+      RoleName: !Sub "${DisplayName}-ecsinstance"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - ec2.amazonaws.com
+          Action:
+          - sts:AssumeRole
+
+  EcsInstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Path: "/"
+      Roles:
+      - !Ref EcsInstanceRole
+
+  HitmanJobDefinition:
+    Type: "AWS::Batch::JobDefinition"
+    Properties:
+      JobDefinitionName: !Sub "${DisplayName}-job-definition"
+      Type: container
+      Parameters: {}
+      ContainerProperties:
+        Memory: 1000
+        Privileged: false
+        JobRoleArn: !Ref HitmanJobRole
+        ReadonlyRootFilesystem: false
+        Vcpus: 1
+        Image: !Ref NukeEcrImage 
+        Environment:
+          - Name: CONF_BUCKET
+            Value: !Ref HitmanConfigBucket
+      RetryStrategy:
+        Attempts: 1
+
+  HitmanJobRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: "/"
+      RoleName: !Sub "${DisplayName}-jobrole"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - ecs-tasks.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Policies:
+      - PolicyName: accessConfigBucketPolicy
+        PolicyDocument:
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "s3:ListBucket"
+            - "s3:GetObject"
+            Resource:
+            - !Sub "arn:aws:s3:::${HitmanConfigBucket}"
+            - !Sub "arn:aws:s3:::${HitmanConfigBucket}/*"
+      - PolicyName: assumeRolePolicy
+        PolicyDocument:
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "sts:AssumeRole"
+            Resource:
+            - "arn:aws:iam::*:role/Administrator"
+
+  HitmanScheduledRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "ScheduledRule"
+      ScheduleExpression: !Ref HitmanFrequency
+      State: ENABLED
+      Targets:
+      - Id: "HitmanSaturday"
+        Arn: !GetAtt NukeJobLauncherLambda.Arn
+
+  PermissionForRuleToInvokeLambda:
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      FunctionName: !Ref NukeJobLauncherLambda
+      Action: "lambda:InvokeFunction"
+      Principal: "events.amazonaws.com"
+      SourceArn: !Sub ${HitmanScheduledRule.Arn}
+
+  NukeJobLauncherLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${TagApp}-lambda-invoke"
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: "lambda.amazonaws.com"
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+      Policies:
+      - PolicyName: accessConfigBucketPolicy
+        PolicyDocument:
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "s3:ListBucket"
+            - "s3:GetObject"
+            Resource:
+            - !Sub "arn:aws:s3:::${HitmanConfigBucket}"
+            - !Sub "arn:aws:s3:::${HitmanConfigBucket}/*"
+      - PolicyName: launch-jobs-allow
+        PolicyDocument:
+          Statement:
+          - Effect: Allow
+            Action:
+            - logs:PutLogEvents
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            Resource:
+            - "arn:aws:logs:*:*:*"
+          - Effect: Allow
+            Action:
+            - batch:DescribeJobs
+            - batch:ListJobs
+            - batch:SubmitJob
+            Resource:
+            - "*"
+
+  HitmanLambdaLogGroup:
+    Type: "AWS::Logs::LogGroup"
+    Properties: 
+      LogGroupName: !Sub '/aws/lambda/${TagBlock}-${TagApp}' 
+      RetentionInDays: 30
+
+  NukeJobLauncherLambda:
+    Type: "AWS::Lambda::Function"
+    Properties: 
+      FunctionName: !Sub '${TagBlock}-${TagApp}'
+      Description: "Launch aws-nuke job"
+      Handler: "index.lambda_handler"
+      Code:
+        ZipFile: |
+                  import os
+                  import json
+                  import boto3
+                  def lambda_handler(event, context):
+                    client = boto3.client('batch')
+                    for accountId in retreiveAccountList():
+                      response = client.submit_job(
+                        jobName=os.environ['JOBNAME'] + "-" + accountId,
+                        jobQueue=os.environ['JOBQUEUE'],
+                        jobDefinition=os.environ['JOBDEFINITION'],
+                        containerOverrides={
+                          'environment': [
+                            {
+                              'name': 'ACCOUNT_TO_NUKE',
+                              'value': accountId
+                            },
+                          ]
+                        }
+                      )
+                      print("Job launched : %s with jobId %s to nuke account %s" % (response['jobName'], response['jobId'], accountId))
+                  
+                  def retreiveAccountList():
+                    CONFIGFILE_BUCKET = os.environ['CONFIGFILE_BUCKET']
+                    CONFIGFILE_NAME = os.environ['CONFIGFILE_NAME']
+                    tempFile = '/tmp/accounts.list'
+                    accountList=[]
+                    
+                    s3client = boto3.client('s3')
+                    s3client.download_file(CONFIGFILE_BUCKET, CONFIGFILE_NAME, tempFile)
+                    for line in open(tempFile):
+                      li=line.strip()
+                      if not li.startswith("#"):
+                        accountList.append(line.rstrip())
+                    return accountList
+      Environment:
+        Variables:
+          JOBNAME: "hitman-job"
+          JOBQUEUE: !Ref NukeJobQueue
+          JOBDEFINITION: !Ref HitmanJobDefinition
+          CONFIGFILE_BUCKET: !Ref HitmanConfigBucket
+          CONFIGFILE_NAME: "accounts.list"
+      MemorySize: 128
+      Role: !Sub ${NukeJobLauncherLambdaRole.Arn}
+      Runtime: "python3.6"
+      Timeout: 60
+      Tags:
+      - Key: Block
+        Value: !Ref TagBlock
+      - Key: Org
+        Value: !Ref TagOrg
+      - Key: App
+        Value: !Ref TagApp
+

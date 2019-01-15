@@ -1,0 +1,58 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Common resources for Hitman
+# Stack Name : hitman-common
+# Description : this stack creates the Hitman main stack prerequisites :
+# - one ECR repository
+# - one S3 bucket
+
+
+Parameters:
+
+  Name:
+    Description: Baseline for naming ressources
+    Type: String
+
+  App:
+    Description: Application referenced by this stack
+    Type: String
+
+  Org:
+    Description: Organization Unit
+    Type: String
+
+  HitmanEcrRepoName:
+    Description: Organization Unit
+    Type: String
+
+
+Resources:
+
+  HitmanEcrRepository:
+    Type: AWS::ECR::Repository
+    Properties: 
+      RepositoryName: !Sub '${HitmanEcrRepoName}'
+
+  HitmanS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${Name}-conf-${AWS::AccountId}'
+      Tags:
+      - Key: App
+        Value: !Sub '${App}'
+      - Key: Org
+        Value: !Sub '${Org}'
+
+Outputs:
+
+  HitmanEcrRepository:
+    Description: Hitman ECR repository
+    Value: !GetAtt HitmanEcrRepository.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-EcrRepository"
+
+  HitmanS3Bucket:
+    Description: Hitman S3 bucket
+    Value: !GetAtt HitmanS3Bucket.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-S3Bucket"
+
