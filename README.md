@@ -18,6 +18,8 @@ It simply industrializes the deletion process thanks to the following AWS ressou
 - S3 to store some configuration
 - Cloudwatch Logs to log the global acitivity
 
+![Hitman Diagram](images/hitman-diagram.png)
+
 ## Prerequisites
 
 Hitman needs :
