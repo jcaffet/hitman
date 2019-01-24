@@ -36,6 +36,10 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub '${Name}-conf-${AWS::AccountId}'
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+        - ServerSideEncryptionByDefault:
+            SSEAlgorithm: AES256
       Tags:
       - Key: App
         Value: !Sub '${App}'
