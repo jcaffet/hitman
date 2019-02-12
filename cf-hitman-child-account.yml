@@ -1,0 +1,29 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Stack providing cross account access for Hitman
+
+Parameters:
+
+  HitmanAccount:
+    Description: AWS account ID where Hitman is installed
+    Type: String
+    ConstraintDescription: Must be a valid AWS account ID
+
+Resources:
+
+  HitmanNukeAssumeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: hitman-nuke-assume-role
+      MaxSessionDuration: 3600
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            AWS: !Sub 'arn:aws:iam::${HitmanAccount}:root'
+          Action:
+          - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+      Path: "/"
+

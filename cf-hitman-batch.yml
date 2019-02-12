@@ -64,6 +64,11 @@ Parameters:
     Description: ECR image to use
     Type: String
 
+  NukeRoleToAssume:
+    Description: IAM role to assume on the account to Nuke
+    Type: String
+    Default: hitman-nuke-assume-role
+
   HitmanConfigBucket:
     Description: S3 bucket with Hitman configuration
     Type: String
@@ -144,7 +149,7 @@ Resources:
         - Order: 1
           ComputeEnvironment: !Ref HitmanComputeEnv
       Priority: 1
-      JobQueueName: !Sub "${DisplayName}-queue}"
+      JobQueueName: !Sub "${DisplayName}-queue"
 
   EcsInstanceRole:
     Type: AWS::IAM::Role
@@ -221,7 +226,7 @@ Resources:
             Action:
             - "sts:AssumeRole"
             Resource:
-            - "arn:aws:iam::*:role/Administrator"
+            - "arn:aws:iam::*:role/${NukeRoleToAssume}"
 
   HitmanScheduledRule:
     Type: AWS::Events::Rule
@@ -300,6 +305,7 @@ Resources:
                   import json
                   import boto3
                   def lambda_handler(event, context):
+                    NUKE_ROLE_TO_ASSUME = os.environ['NUKE_ROLE_TO_ASSUME']
                     client = boto3.client('batch')
                     for accountId in retreiveAccountList():
                       response = client.submit_job(
@@ -312,10 +318,14 @@ Resources:
                               'name': 'ACCOUNT_TO_NUKE',
                               'value': accountId
                             },
+                            {
+                              'name': 'NUKE_ROLE_TO_ASSUME',
+                              'value': NUKE_ROLE_TO_ASSUME
+                            },
                           ]
                         }
                       )
-                      print("Job launched : %s with jobId %s to nuke account %s" % (response['jobName'], response['jobId'], accountId))
+                      print("Job %s launched with jobId %s to nuke account %s with role %s" % (response['jobName'], response['jobId'], accountId, NUKE_ROLE_TO_ASSUME))
                   
                   def retreiveAccountList():
                     CONFIGFILE_BUCKET = os.environ['CONFIGFILE_BUCKET']
@@ -337,6 +347,7 @@ Resources:
           JOBDEFINITION: !Ref HitmanJobDefinition
           CONFIGFILE_BUCKET: !Ref HitmanConfigBucket
           CONFIGFILE_NAME: "accounts.list"
+          NUKE_ROLE_TO_ASSUME: !Ref NukeRoleToAssume
       MemorySize: 128
       Role: !Sub ${NukeJobLauncherLambdaRole.Arn}
       Runtime: "python3.6"
