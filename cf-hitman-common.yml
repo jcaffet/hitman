@@ -8,15 +8,19 @@ Description: Common resources for Hitman
 
 Parameters:
 
-  Name:
+  DisplayName:
     Description: Baseline for naming ressources
     Type: String
 
-  App:
+  TagBlock:
+    Description: Applicative block tag
+    Type: String
+
+  TagApp:
     Description: Application referenced by this stack
     Type: String
 
-  Org:
+  TagOrg:
     Description: Organization Unit
     Type: String
 
@@ -35,16 +39,18 @@ Resources:
   HitmanS3Bucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub '${Name}-conf-${AWS::AccountId}'
+      BucketName: !Sub '${DisplayName}-conf-${AWS::AccountId}'
       BucketEncryption:
         ServerSideEncryptionConfiguration:
         - ServerSideEncryptionByDefault:
             SSEAlgorithm: AES256
       Tags:
+      - Key: Block
+        Value: !Sub '${TagBlock}'
       - Key: App
-        Value: !Sub '${App}'
+        Value: !Sub '${TagApp}'
       - Key: Org
-        Value: !Sub '${Org}'
+        Value: !Sub '${TagOrg}'
 
 Outputs:
 
