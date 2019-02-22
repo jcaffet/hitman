@@ -1,7 +1,7 @@
 FROM amazonlinux:latest
 RUN yum -y install which unzip aws-cli jq tar gzip
 
-ENV AWSNUKE_VERSION=2.7.0
+ENV AWSNUKE_VERSION=2.8.0
 ADD https://github.com/rebuy-de/aws-nuke/releases/download/v${AWSNUKE_VERSION}/aws-nuke-v${AWSNUKE_VERSION}-linux-amd64.tar.gz .
 RUN tar xzf aws-nuke-v${AWSNUKE_VERSION}-linux-amd64.tar.gz && \
     mv aws-nuke-v${AWSNUKE_VERSION}-linux-amd64 /usr/local/bin/aws-nuke && \
