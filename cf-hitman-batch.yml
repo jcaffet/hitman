@@ -104,6 +104,7 @@ Resources:
               - "sts:AssumeRole"
       ManagedPolicyArns:
       - "arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetRole"
+      - "arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetTaggingRole"
 
   HitmanComputeEnv:
     Type: "AWS::Batch::ComputeEnvironment"
