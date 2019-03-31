@@ -13,7 +13,7 @@ Hitman is based on the great [aws-nuke](https://github.com/rebuy-de/aws-nuke).
 It simply industrializes the deletion process thanks to the following AWS ressources :
 - CloudWatch Rule to trigger the deletion execution
 - Batch to ensure a pay per use strategy
-- ECR to host the Docker image that embeds aw-nuke
+- ECR to host the Docker image that embeds aws-nuke
 - Lambda to gather the accounts to nuke and submit the jobs
 - S3 to store some configuration
 - Cloudwatch Logs to log the global acitivity
