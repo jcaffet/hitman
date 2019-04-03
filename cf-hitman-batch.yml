@@ -69,6 +69,11 @@ Parameters:
     Type: String
     Default: hitman-nuke-assume-role
 
+  HitmanOrganizationsRole:
+    Description: IAM role to assume on the Organizations account to Hitman
+    Type: String
+    Default: hitman-organizations-role
+
   HitmanConfigBucket:
     Description: S3 bucket with Hitman configuration
     Type: String
@@ -187,7 +192,7 @@ Resources:
         JobRoleArn: !Ref HitmanJobRole
         ReadonlyRootFilesystem: false
         Vcpus: 1
-        Image: !Ref NukeEcrImage 
+        Image: !Ref NukeEcrImage
         Environment:
           - Name: CONF_BUCKET
             Value: !Ref HitmanConfigBucket
@@ -238,6 +243,7 @@ Resources:
       Targets:
       - Id: "HitmanSaturday"
         Arn: !GetAtt NukeJobLauncherLambda.Arn
+        Input : '{ "mode": "list" }'
 
   PermissionForRuleToInvokeLambda:
     Type: "AWS::Lambda::Permission"
@@ -287,16 +293,24 @@ Resources:
             - batch:SubmitJob
             Resource:
             - "*"
+      - PolicyName: assumeRoleOrganizationsPolicy
+        PolicyDocument:
+          Statement:
+          - Effect: "Allow"
+            Action:
+            - "sts:AssumeRole"
+            Resource:
+            - !Sub "arn:aws:iam::*:role/${HitmanOrganizationsRole}"
 
   HitmanLambdaLogGroup:
     Type: "AWS::Logs::LogGroup"
-    Properties: 
-      LogGroupName: !Sub '/aws/lambda/${TagBlock}-${TagApp}' 
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${TagBlock}-${TagApp}'
       RetentionInDays: 30
 
   NukeJobLauncherLambda:
     Type: "AWS::Lambda::Function"
-    Properties: 
+    Properties:
       FunctionName: !Sub '${TagBlock}-${TagApp}'
       Description: "Launch aws-nuke job"
       Handler: "index.lambda_handler"
@@ -305,10 +319,30 @@ Resources:
                   import os
                   import json
                   import boto3
+
                   def lambda_handler(event, context):
                     NUKE_ROLE_TO_ASSUME = os.environ['NUKE_ROLE_TO_ASSUME']
+                    print("Event received : " + json.dumps(event, indent=2))
+                    configMode = event['mode']
+
+                    if configMode == "list":
+                      CONFIGFILE_BUCKET = os.environ['CONFIGFILE_BUCKET']
+                      CONFIGFILE_NAME = os.environ['CONFIGFILE_NAME']
+                      accountIds = getAccountIdsListS3(configFileBucket, configFileName)
+                    elif configMode == "ou":
+                      ouId = event['ouId']
+                      ORGANIZATIONS_ROLE = os.environ['ORGANIZATIONS_ROLE']
+                      ORGANIZATIONS_ACCOUNT = os.environ['ORGANIZATIONS_ACCOUNT']
+                      session = get_session(role=ORGANIZATIONS_ROLE, account=ORGANIZATIONS_ACCOUNT, session_name='hitman_lambda')
+                      accountIds = getActiveAccountIdsListOu(session, ouId)
+                    elif configMode == "standalone":
+                      accountIds = [event['accountId']]
+                    else:
+                      print("No mode detected")
+                    print("%s accounts to Nuke : %s" % (len(accountIds), accountIds))
+
                     client = boto3.client('batch')
-                    for accountId in retreiveAccountList():
+                    for accountId in accountIds:
                       response = client.submit_job(
                         jobName=os.environ['JOBNAME'] + "-" + accountId,
                         jobQueue=os.environ['JOBQUEUE'],
@@ -327,20 +361,42 @@ Resources:
                         }
                       )
                       print("Job %s launched with jobId %s to nuke account %s with role %s" % (response['jobName'], response['jobId'], accountId, NUKE_ROLE_TO_ASSUME))
-                  
-                  def retreiveAccountList():
-                    CONFIGFILE_BUCKET = os.environ['CONFIGFILE_BUCKET']
-                    CONFIGFILE_NAME = os.environ['CONFIGFILE_NAME']
+
+                  def getAccountIdsListS3(configFileBucket, configFileName):
                     tempFile = '/tmp/accounts.list'
                     accountList=[]
-                    
                     s3client = boto3.client('s3')
-                    s3client.download_file(CONFIGFILE_BUCKET, CONFIGFILE_NAME, tempFile)
+                    s3client.download_file(configFileBucket, configFileName, tempFile)
                     for line in open(tempFile):
                       li=line.strip()
                       if not li.startswith("#"):
                         accountList.append(line.rstrip())
                     return accountList
+
+                  def getActiveAccountIdsListOu(session, OrganizationUnit):
+                    client = session.client('organizations')
+                    response = client.list_accounts_for_parent(ParentId=OrganizationUnit)
+                    accountsFromOu = response.get('Accounts', [])
+                    while(response.get('NextToken') is not None):
+                      response = client.list_accounts_for_parent(ParentId=OrganizationUnit, NextToken=response['NextToken'])
+                      accountsFromOu.extend(response.get('Accounts', []))
+                    activeAccountIds = []
+                    activeAccountIds = [account['Id'] for account in accountsFromOu if account['Status'] == "ACTIVE"]
+                    return activeAccountIds
+
+                  def get_session(role=None, account=None, region=None, session_name='my_session'):
+                    # If the role is given : assumes a role and returns boto3 session
+                    # otherwise : returns a regular session with the current IAM user/role
+                    if role:
+                      client = boto3.client('sts')
+                      role_arn = 'arn:aws:iam::' + account + ':role/' + role
+                      response = client.assume_role(RoleArn=role_arn, RoleSessionName=session_name)
+                      session = boto3.Session(
+                        aws_access_key_id=response['Credentials']['AccessKeyId'],
+                        aws_secret_access_key=response['Credentials']['SecretAccessKey'],
+                        aws_session_token=response['Credentials']['SessionToken'],
+                        region_name=region)
+                      return session
       Environment:
         Variables:
           JOBNAME: "hitman-job"
@@ -349,6 +405,8 @@ Resources:
           CONFIGFILE_BUCKET: !Ref HitmanConfigBucket
           CONFIGFILE_NAME: "accounts.list"
           NUKE_ROLE_TO_ASSUME: !Ref NukeRoleToAssume
+          ORGANIZATIONS_ROLE: !Ref HitmanOrganizationsRole
+          ORGANIZATIONS_ACCOUNT: !Ref HitmanOrganizationsAccount
       MemorySize: 128
       Role: !Sub ${NukeJobLauncherLambdaRole.Arn}
       Runtime: "python3.6"
@@ -360,4 +418,3 @@ Resources:
         Value: !Ref TagOrg
       - Key: App
         Value: !Ref TagApp
-

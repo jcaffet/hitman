@@ -1,0 +1,34 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Stack providing cross account access for Hitman
+
+Parameters:
+
+  HitmanAccount:
+    Description: AWS account ID where Hitman is installed
+    Type: String
+    ConstraintDescription: Must be a valid AWS account ID
+
+Resources:
+
+  HitmanOrgRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: hitman-organizations-role
+      MaxSessionDuration: 3600
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            AWS: !Sub 'arn:aws:iam::${HitmanAccount}:root'
+          Action:
+          - sts:AssumeRole
+      Policies:
+      - PolicyName: "AllowOrganizationListAccounts"
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+          - Effect: "Allow"
+            Action: organizations:ListAccounts
+            Resource: '*'
+

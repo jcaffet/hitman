@@ -30,11 +30,13 @@ Hitman needs :
 
 1. deploy the cf-hitman-common.yml Cloudformation stack in the central account
 2. build, tag and push the Docker image. Follow the information provided in the ECR repository page.
-3. add the list of accounts to nuke in accounts.list file
+3. Depending of the choosen mode :
+   - add the list of accounts to nuke in accounts.list file and upload it in the S3 bucket
+   - configure the Organization Unit in the Cloudwatch rule
 4. customize awsnuke-config-template.yaml :
    - add in the blacklist part the accounts you will never want to nuke
    - add the resources you to not want to delete. Keep the role by Hitman to delete resources
-5. upload both the accounts.list and awsnuke-config-template.yaml files in the create S3 bucket
+5. upload awsnuke-config-template.yaml files in the create S3 bucket
 6. deploy the cf-hitman-batch.yml Cloudformation stack in the central account
 7. in each spoke account (or once we a Stackset), deploy cf-hitman-spoke-account.yml to deploy the need role to assume
 
