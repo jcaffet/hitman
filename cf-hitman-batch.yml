@@ -58,7 +58,7 @@ Parameters:
   ComputeEnvMaxCpu:
     Description: compute envs VPC location
     Type: Number
-    Default: 2
+    Default: 4
 
   NukeEcrImage:
     Description: ECR image to use
@@ -128,7 +128,7 @@ Resources:
         SpotIamFleetRole: !Ref SpotFleetRole
         InstanceRole: !Ref EcsInstanceProfile
         InstanceTypes:
-          - c5
+          - c3
         Tags: {Name: !Ref DisplayName, Block: !Ref TagBlock, App: !Ref TagApp, Org: !Ref TagOrg}
       State: ENABLED
 
