@@ -328,7 +328,7 @@ Resources:
                     if configMode == "list":
                       CONFIGFILE_BUCKET = os.environ['CONFIGFILE_BUCKET']
                       CONFIGFILE_NAME = os.environ['CONFIGFILE_NAME']
-                      accountIds = getAccountIdsListS3(configFileBucket, configFileName)
+                      accountIds = getAccountIdsListS3(CONFIGFILE_BUCKET, CONFIGFILE_NAME)
                     elif configMode == "ou":
                       ouId = event['ouId']
                       ORGANIZATIONS_ROLE = os.environ['ORGANIZATIONS_ROLE']
