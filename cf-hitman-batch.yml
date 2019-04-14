@@ -69,6 +69,10 @@ Parameters:
     Type: String
     Default: hitman-nuke-assume-role
 
+  HitmanOrganizationsAccount:
+    Description: Id of the account hosting AWS Organizations
+    Type: String
+
   HitmanOrganizationsRole:
     Description: IAM role to assume on the Organizations account to Hitman
     Type: String
