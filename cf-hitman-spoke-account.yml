@@ -9,6 +9,10 @@ Parameters:
     Description: AWS accountID where Hitman is installed
     Type: String
     ConstraintDescription: Must be a valid AWS account ID
+    
+  HitmanNukeAssumeRoleExternalId:
+    Description: Hitman Role External ID
+    Type: String
 
 Resources:
 
@@ -24,7 +28,9 @@ Resources:
             AWS: !Sub 'arn:aws:iam::${HitmanCentralAccount}:root'
           Action:
           - sts:AssumeRole
+          Condition:
+            StringEquals:
+              "sts:ExternalId": !Sub '${HitmanNukeAssumeRoleExternalId}'
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AdministratorAccess
       Path: "/"
-

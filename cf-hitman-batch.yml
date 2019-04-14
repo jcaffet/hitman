@@ -13,6 +13,12 @@ Metadata:
       - Label:
           default: 'ComputeEnv Cpu'
         Parameters: ['ComputeEnvMinCpu', 'ComputeEnvDesiredCpu', 'ComputeEnvMaxCpu']
+      - Label:
+          default: 'Hitman Role on Spoke accounts'
+        Parameters: ['NukeRoleToAssume', 'NukeRoleExternalId']
+      - Label:
+          default: 'Hitman Role on Organizations accounts'
+        Parameters: ['HitmanOrganizationsAccount', 'HitmanOrganizationsRole']    
 
 Parameters:
 
@@ -68,6 +74,10 @@ Parameters:
     Description: IAM role to assume on the account to Nuke
     Type: String
     Default: hitman-nuke-assume-role
+
+  NukeRoleExternalId:
+    Description: Hitman Role External ID
+    Type: String
 
   HitmanOrganizationsAccount:
     Description: Id of the account hosting AWS Organizations
@@ -361,6 +371,10 @@ Resources:
                               'name': 'NUKE_ROLE_TO_ASSUME',
                               'value': NUKE_ROLE_TO_ASSUME
                             },
+                            {
+                              'name': 'NUKE_ROLE_EXTERNAL_ID',
+                              'value': NUKE_ROLE_EXTERNAL_ID
+                            },
                           ]
                         }
                       )
@@ -409,6 +423,7 @@ Resources:
           CONFIGFILE_BUCKET: !Ref HitmanConfigBucket
           CONFIGFILE_NAME: "accounts.list"
           NUKE_ROLE_TO_ASSUME: !Ref NukeRoleToAssume
+          NUKE_ROLE_EXTERNAL_ID: !Ref NukeRoleExternalId
           ORGANIZATIONS_ROLE: !Ref HitmanOrganizationsRole
           ORGANIZATIONS_ACCOUNT: !Ref HitmanOrganizationsAccount
       MemorySize: 128
