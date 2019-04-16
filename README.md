@@ -38,9 +38,8 @@ Hitman needs :
    - add the resources you to not want to delete. Keep the role by Hitman to delete resources
 5. upload awsnuke-config-template.yaml files in the create S3 bucket
 6. deploy the cf-hitman-batch.yml Cloudformation stack in the central account
-7. in each spoke account (or once we a Stackset), deploy cf-hitman-spoke-account.yml to deploy the need role to assume
+7. in each spoke account (or once we a Stackset), deploy cf-hitman-spoke-account.yml to deploy the need role to assume. Do not forget a strong ExternalId like UUID
 
 ## Warning
 
 Please pay an extrem attention to the account list to nuke ... and do not forget to blacklist usefull account.
-
