@@ -430,7 +430,7 @@ Resources:
           ORGANIZATIONS_ACCOUNT: !Ref HitmanOrganizationsAccount
       MemorySize: 128
       Role: !Sub ${NukeJobLauncherLambdaRole.Arn}
-      Runtime: "python3.6"
+      Runtime: "python3.7"
       Timeout: 60
       Tags:
       - Key: Block
