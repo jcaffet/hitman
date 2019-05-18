@@ -1,5 +1,8 @@
 FROM amazonlinux:latest
-RUN yum -y install which unzip aws-cli jq tar gzip
+
+RUN yum -y update \
+ && yum -y install which unzip aws-cli jq tar gzip \
+ && yum clean all
 
 ENV AWSNUKE_VERSION=2.10.0
 ADD https://github.com/rebuy-de/aws-nuke/releases/download/v${AWSNUKE_VERSION}/aws-nuke-v${AWSNUKE_VERSION}-linux-amd64.tar.gz .
