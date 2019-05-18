@@ -210,6 +210,10 @@ Resources:
         Environment:
           - Name: CONF_BUCKET
             Value: !Ref HitmanConfigBucket
+          - Name: NUKE_ROLE_TO_ASSUME
+            Value: !Ref NukeRoleToAssume
+          - Name: NUKE_ROLE_EXTERNALID
+            Value: !Ref NukeRoleExternalId
       RetryStrategy:
         Attempts: 1
 
@@ -335,8 +339,6 @@ Resources:
                   import boto3
 
                   def lambda_handler(event, context):
-                    NUKE_ROLE_TO_ASSUME = os.environ['NUKE_ROLE_TO_ASSUME']
-                    NUKE_ROLE_EXTERNAL_ID = os.environ['NUKE_ROLE_EXTERNAL_ID']
                     print("Event received : " + json.dumps(event, indent=2))
                     configMode = event['mode']
 
@@ -369,18 +371,10 @@ Resources:
                               'name': 'ACCOUNT_TO_NUKE',
                               'value': accountId
                             },
-                            {
-                              'name': 'NUKE_ROLE_TO_ASSUME',
-                              'value': NUKE_ROLE_TO_ASSUME
-                            },
-                            {
-                              'name': 'NUKE_ROLE_EXTERNAL_ID',
-                              'value': NUKE_ROLE_EXTERNAL_ID
-                            },
                           ]
                         }
                       )
-                      print("Job %s launched with jobId %s to nuke account %s with role %s" % (response['jobName'], response['jobId'], accountId, NUKE_ROLE_TO_ASSUME))
+                      print("Job %s launched with jobId %s to nuke account %s." % (response['jobName'], response['jobId'], accountId))
 
                   def getAccountIdsListS3(configFileBucket, configFileName):
                     tempFile = '/tmp/accounts.list'
@@ -424,8 +418,6 @@ Resources:
           JOBDEFINITION: !Ref HitmanJobDefinition
           CONFIGFILE_BUCKET: !Ref HitmanConfigBucket
           CONFIGFILE_NAME: "accounts.list"
-          NUKE_ROLE_TO_ASSUME: !Ref NukeRoleToAssume
-          NUKE_ROLE_EXTERNAL_ID: !Ref NukeRoleExternalId
           ORGANIZATIONS_ROLE: !Ref HitmanOrganizationsRole
           ORGANIZATIONS_ACCOUNT: !Ref HitmanOrganizationsAccount
       MemorySize: 128

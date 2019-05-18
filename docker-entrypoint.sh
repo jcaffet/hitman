@@ -17,7 +17,7 @@ echo "Assume role ${NUKE_ROLE_TO_ASSUME} role on ${ACCOUNT_TO_NUKE}"
 aws sts assume-role \
         --role-arn arn:aws:iam::${ACCOUNT_TO_NUKE}:role/${NUKE_ROLE_TO_ASSUME} \
         --role-session-name assumeRoleForNuke \
-        --external-id ${NUKE_ROLE_EXTERNAL_ID} \
+        --external-id ${NUKE_ROLE_EXTERNALID} \
         >${TMP_ASSUME_ROLE_FILE}
 
 export AWS_SECRET_ACCESS_KEY=`cat ${TMP_ASSUME_ROLE_FILE} | jq -r .Credentials.SecretAccessKey`
@@ -36,4 +36,3 @@ ${AWSNUKE_BIN} --config ${AWSNUKE_CONFIG} \
         --secret-access-key ${AWS_SECRET_ACCESS_KEY} \
         --no-dry-run \
         --force
-
