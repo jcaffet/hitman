@@ -323,7 +323,7 @@ Resources:
   HitmanLambdaLogGroup:
     Type: "AWS::Logs::LogGroup"
     Properties:
-      LogGroupName: !Sub '/aws/lambda/${TagBlock}-${TagApp}'
+      LogGroupName: !Sub '/aws/lambda/${NukeJobLauncherLambda}'
       RetentionInDays: 30
 
   NukeJobLauncherLambda:
