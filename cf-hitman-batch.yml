@@ -52,19 +52,24 @@ Parameters:
     Type: List<AWS::EC2::Subnet::Id>
 
   ComputeEnvMinCpu:
-    Description: compute envs VPC location
+    Description: compute env min number of CPUs
     Type: Number
     Default: 0
 
   ComputeEnvDesiredCpu:
-    Description: compute envs VPC location
+    Description: compute env desired number of CPUs
     Type: Number
     Default: 0
 
   ComputeEnvMaxCpu:
-    Description: compute envs VPC location
+    Description: compute env max number of CPUs
     Type: Number
     Default: 4
+
+  JobDefinitionMemory:
+    Description: job definition memory size
+    Type: Number
+    Default: 1000
 
   NukeEcrImage:
     Description: ECR image to use
@@ -201,7 +206,7 @@ Resources:
       Type: container
       Parameters: {}
       ContainerProperties:
-        Memory: 1000
+        Memory: !Ref JobDefinitionMemory
         Privileged: false
         JobRoleArn: !Ref HitmanJobRole
         ReadonlyRootFilesystem: false
