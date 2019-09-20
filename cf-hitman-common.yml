@@ -15,7 +15,7 @@ Parameters:
   TagApp:
     Description: Application referenced by this stack
     Type: String
-    Default: prowler
+    Default: hitman
 
   TagOrg:
     Description: Organization Unit
@@ -25,7 +25,7 @@ Parameters:
   HitmanEcrRepoName:
     Description: Organization Unit
     Type: String
-    Default: prowler
+    Default: hitman
 
 Resources:
 
