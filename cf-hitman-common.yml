@@ -5,52 +5,57 @@ Description: Common resources for Hitman
 # - one ECR repository
 # - one S3 bucket
 
-
 Parameters:
-
-  DisplayName:
-    Description: Baseline for naming ressources
-    Type: String
 
   TagBlock:
     Description: Applicative block tag
     Type: String
+    Default: sharedservices
 
   TagApp:
     Description: Application referenced by this stack
     Type: String
+    Default: prowler
 
   TagOrg:
     Description: Organization Unit
     Type: String
+    Default: cloudteam
 
   HitmanEcrRepoName:
     Description: Organization Unit
     Type: String
-
+    Default: prowler
 
 Resources:
 
   HitmanEcrRepository:
     Type: AWS::ECR::Repository
-    Properties: 
-      RepositoryName: !Sub '${HitmanEcrRepoName}'
+    Properties:
+      RepositoryName: !Ref HitmanEcrRepoName
+      Tags:
+      - Key: Block
+        Value: !Ref TagBlock
+      - Key: App
+        Value: !Ref TagApp
+      - Key: Org
+        Value: !Ref TagOrg
 
   HitmanS3Bucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub '${DisplayName}-conf-${AWS::AccountId}'
+      BucketName: !Sub '${TagApp}-conf-${AWS::AccountId}'
       BucketEncryption:
         ServerSideEncryptionConfiguration:
         - ServerSideEncryptionByDefault:
             SSEAlgorithm: AES256
       Tags:
       - Key: Block
-        Value: !Sub '${TagBlock}'
+        Value: !Ref TagBlock
       - Key: App
-        Value: !Sub '${TagApp}'
+        Value: !Ref TagApp
       - Key: Org
-        Value: !Sub '${TagOrg}'
+        Value: !Ref TagOrg
 
 Outputs:
 
@@ -65,4 +70,3 @@ Outputs:
     Value: !GetAtt HitmanS3Bucket.Arn
     Export:
       Name: !Sub "${AWS::StackName}-S3Bucket"
-
