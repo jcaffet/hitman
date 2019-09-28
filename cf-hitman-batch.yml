@@ -363,7 +363,7 @@ Resources:
   NukeJobLauncherLambda:
     Type: "AWS::Lambda::Function"
     Properties:
-      FunctionName: !Sub '${TagApp}-wrapper'
+      FunctionName: !Sub '${TagApp}-launcher'
       Description: "Launch aws-nuke job"
       Handler: "index.lambda_handler"
       Code:

@@ -15,12 +15,12 @@ else
 fi
 
 PAYLOAD='{"mode":"standalone", "accountId":"'"${account}"'"}'
+LAMBDA_NAME=hitman-launcher
 
 echo "Get session on profile ${profile}"
-echo "Payload : |${PAYLOAD}|"
+echo "Payload : ${PAYLOAD}"
 aws --profile=${profile} lambda invoke \
-    --function-name sharedservices-hitman \
+    --function-name ${LAMBDA_NAME} \
     --invocation-type Event \
     --payload '{"mode":"standalone", "accountId":"'"${account}"'"}' \
     outfile.txt
-
