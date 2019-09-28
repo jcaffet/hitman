@@ -4,13 +4,16 @@ AWSNUKE_CONFIG_TEMPLATE=awsnuke-config-template.yaml
 AWSNUKE_CONFIG=awsnuke-config.yaml
 TMP_ASSUME_ROLE_FILE=/tmp/assume-role.json
 
+echo "User :"
+id
+
 echo "aws-nuke version :"
 ${AWSNUKE_BIN} version
 
 echo "Retrieve nuke template file from s3://${CONF_BUCKET}/${AWSNUKE_CONFIG_TEMPLATE}"
 aws s3 cp s3://${CONF_BUCKET}/${AWSNUKE_CONFIG_TEMPLATE} .
 
-echo "Set account to nuke : ${ACCOUNT_TO_NUKE} in ${AWSNUKE_CONFIG_TEMPLATE}"
+echo "Set account to nuke ${ACCOUNT_TO_NUKE} in ${AWSNUKE_CONFIG_TEMPLATE}"
 sed "s/||ACCOUNT||/${ACCOUNT_TO_NUKE}/g" ${AWSNUKE_CONFIG_TEMPLATE} > ${AWSNUKE_CONFIG}
 
 echo "Assume role ${NUKE_ROLE_TO_ASSUME} role on ${ACCOUNT_TO_NUKE}"
