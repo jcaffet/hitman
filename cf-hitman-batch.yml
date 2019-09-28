@@ -129,6 +129,13 @@ Resources:
       ManagedPolicyArns:
       - "arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetRole"
       - "arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetTaggingRole"
+      Tags:
+      - Key: Block
+        Value: !Ref TagBlock
+      - Key: App
+        Value: !Ref TagApp
+      - Key: Org
+        Value: !Ref TagOrg
 
   HitmanComputeEnv:
     Type: "AWS::Batch::ComputeEnvironment"
@@ -166,6 +173,13 @@ Resources:
           - sts:AssumeRole
       ManagedPolicyArns:
       - "arn:aws:iam::aws:policy/service-role/AWSBatchServiceRole"
+      Tags:
+      - Key: Block
+        Value: !Ref TagBlock
+      - Key: App
+        Value: !Ref TagApp
+      - Key: Org
+        Value: !Ref TagOrg
 
   NukeJobQueue:
     Type: "AWS::Batch::JobQueue"
@@ -191,6 +205,13 @@ Resources:
             - ec2.amazonaws.com
           Action:
           - sts:AssumeRole
+      Tags:
+      - Key: Block
+        Value: !Ref TagBlock
+      - Key: App
+        Value: !Ref TagApp
+      - Key: Org
+        Value: !Ref TagOrg
 
   EcsInstanceProfile:
     Type: "AWS::IAM::InstanceProfile"
@@ -256,6 +277,13 @@ Resources:
             - "sts:AssumeRole"
             Resource:
             - !Sub "arn:aws:iam::*:role/${NukeRoleToAssume}"
+      Tags:
+      - Key: Block
+        Value: !Ref TagBlock
+      - Key: App
+        Value: !Ref TagApp
+      - Key: Org
+        Value: !Ref TagOrg
 
   HitmanScheduledRule:
     Type: AWS::Events::Rule
@@ -324,6 +352,13 @@ Resources:
             - "sts:AssumeRole"
             Resource:
             - !Sub "arn:aws:iam::*:role/${HitmanOrganizationsRole}"
+      Tags:
+      - Key: Block
+        Value: !Ref TagBlock
+      - Key: App
+        Value: !Ref TagApp
+      - Key: Org
+        Value: !Ref TagOrg
 
   HitmanLambdaLogGroup:
     Type: "AWS::Logs::LogGroup"
