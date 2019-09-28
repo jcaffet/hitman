@@ -17,14 +17,10 @@ Metadata:
           default: 'Hitman Role on Spoke accounts'
         Parameters: ['NukeRoleToAssume', 'NukeRoleExternalId']
       - Label:
-          default: 'Hitman Role on Organizations accounts'
+          default: 'Hitman Role on Organizations account'
         Parameters: ['HitmanOrganizationsAccount', 'HitmanOrganizationsRole']
 
 Parameters:
-
-  DisplayName:
-    Description: Project name
-    Type: String
 
   TagBlock:
     Description: Applicative block tag
@@ -103,7 +99,7 @@ Resources:
   SecurityGroupForInstances:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: !Sub '${DisplayName}-instances'
+      GroupName: !Sub '${TagApp}-instances'
       GroupDescription: Security group for instances
       VpcId: !Ref ComputeEnvVPC
       Tags:
@@ -155,14 +151,14 @@ Resources:
         InstanceRole: !Ref EcsInstanceProfile
         InstanceTypes:
           - c3
-        Tags: {Name: !Ref DisplayName, Block: !Ref TagBlock, App: !Ref TagApp, Org: !Ref TagOrg}
+        Tags: {Name: !Ref TagApp, Block: !Ref TagBlock, App: !Ref TagApp, Org: !Ref TagOrg}
       State: ENABLED
 
   ComputeEnvironmentRole:
     Type: AWS::IAM::Role
     Properties:
       Path: "/"
-      RoleName: !Sub "${DisplayName}-compute-environment"
+      RoleName: !Sub "${TagApp}-compute-environment"
       AssumeRolePolicyDocument:
         Statement:
         - Effect: Allow
@@ -188,13 +184,13 @@ Resources:
         - Order: 1
           ComputeEnvironment: !Ref HitmanComputeEnv
       Priority: 1
-      JobQueueName: !Sub "${DisplayName}-queue"
+      JobQueueName: !Sub "${TagApp}-queue"
 
   EcsInstanceRole:
     Type: AWS::IAM::Role
     Properties:
       Path: "/"
-      RoleName: !Sub "${DisplayName}-ecsinstance"
+      RoleName: !Sub "${TagApp}-ecsinstance"
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
       AssumeRolePolicyDocument:
@@ -223,7 +219,7 @@ Resources:
   HitmanJobDefinition:
     Type: "AWS::Batch::JobDefinition"
     Properties:
-      JobDefinitionName: !Sub "${DisplayName}-job-definition"
+      JobDefinitionName: !Sub "${TagApp}-job-definition"
       Type: container
       Parameters: {}
       ContainerProperties:
@@ -247,7 +243,7 @@ Resources:
     Type: AWS::IAM::Role
     Properties:
       Path: "/"
-      RoleName: !Sub "${DisplayName}-jobrole"
+      RoleName: !Sub "${TagApp}-jobrole"
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
       AssumeRolePolicyDocument:
