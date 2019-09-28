@@ -1,8 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: Hitman Batch
-# Architectural choices :
-# - no user, no password, no key, only roles
-# - no ssh access to compute envs
+
 
 Metadata:
   AWS::CloudFormation::Interface:
