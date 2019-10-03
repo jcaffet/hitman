@@ -22,7 +22,7 @@ It simply industrializes the deletion process thanks to the following AWS resour
 - CloudWatch Rule to trigger the deletion execution
 - Batch to ensure a pay per use strategy
 - ECR to host the Docker image that embeds aws-nuke
-- one Lambda to gather the accounts to nuke and submit the jobs. The Lambda needs one "configMode" parameter :
+- one Lambda to gather the accounts to nuke and submit the jobs. The Lambda needs one "mode" parameter :
   - list : collect a list of account stored in a S3 Bucket
   - ou : all the accounts of a specified AWS OrganizationUnit will be nuked
   - single : specify one single account to nuke.
