@@ -39,3 +39,9 @@ ${AWSNUKE_BIN} --config ${AWSNUKE_CONFIG} \
         --secret-access-key ${AWS_SECRET_ACCESS_KEY} \
         --no-dry-run \
         --force
+
+if [ $? -eq 0 ]; then
+    echo "Nuke on ${ACCOUNT_TO_NUKE} successed"
+else
+    echo "Nuke on ${ACCOUNT_TO_NUKE} failed"
+fi

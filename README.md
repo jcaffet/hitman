@@ -57,3 +57,11 @@ Hitman needs :
 6. in each spoke account (or once with a Stackset), deploy [cf-hitman-spoke-account.yml](cf-hitman-spoke-account.yml) to spread IAM role to assume.
 
 Do not forget a strong ExternalId like UUID.
+
+## Usage
+
+Once configured, Hitman works autonomously. Awaiting a future improvement, it is possible to have a global view of all the nuke result with a simple CloudWatch Logs Insight request :
+```
+fields @message
+| filter @message not like /Nuke on .*/
+```
