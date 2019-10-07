@@ -455,7 +455,7 @@ Resources:
           ORGANIZATIONS_ROLE: !Ref HitmanOrganizationsRole
           ORGANIZATIONS_ACCOUNT: !Ref HitmanOrganizationsAccount
       MemorySize: 128
-      Role: !Sub ${NukeJobLauncherLambdaRole.Arn}
+      Role: !GetAtt NukeJobLauncherLambdaRole.Arn
       Runtime: "python3.7"
       Timeout: 60
       Tags:
