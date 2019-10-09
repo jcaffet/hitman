@@ -296,7 +296,7 @@ Resources:
       FunctionName: !Ref NukeJobLauncherLambda
       Action: "lambda:InvokeFunction"
       Principal: "events.amazonaws.com"
-      SourceArn: !Sub ${HitmanScheduledRule.Arn}
+      SourceArn: !GetAtt HitmanScheduledRule.Arn
 
   NukeJobLauncherLambdaRole:
     Type: AWS::IAM::Role
