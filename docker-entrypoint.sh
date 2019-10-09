@@ -4,11 +4,11 @@ AWSNUKE_CONFIG_TEMPLATE=awsnuke-config-template.yaml
 AWSNUKE_CONFIG=awsnuke-config.yaml
 TMP_ASSUME_ROLE_FILE=/tmp/assume-role.json
 
-echo "User :"
-id
+ID=`id`
+echo "User : ${ID}"
 
-echo "aws-nuke version :"
-${AWSNUKE_BIN} version
+NUKE_VERSION=`${AWSNUKE_BIN} version`
+echo "aws-nuke version : ${NUKE_VERSION}"
 
 echo "Retrieve nuke template file from s3://${CONF_BUCKET}/${AWSNUKE_CONFIG_TEMPLATE}"
 aws s3 cp s3://${CONF_BUCKET}/${AWSNUKE_CONFIG_TEMPLATE} .
